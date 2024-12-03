@@ -1,11 +1,15 @@
 #include <iostream> 
 #include <sqlite3.h> 
 
+
+
+
+
 int main()
 {
     sqlite3* DB; 
     int exit = 0; 
-    exit = sqlite3_open("example.db", &DB); 
+    exit = sqlite3_open("characters.db", &DB); 
   
     if (exit) { 
         std::cerr << "Error open DB " << sqlite3_errmsg(DB) << std::endl; 
