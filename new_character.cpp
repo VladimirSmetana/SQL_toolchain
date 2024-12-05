@@ -3,7 +3,7 @@
 #include <iostream>
 #include <sqlite3.h>
 #include <string>
-
+#include <map>
 using namespace std;
 
 static int callback(void *data, int argc, char **argv, char **azColName)
@@ -20,7 +20,17 @@ static int callback(void *data, int argc, char **argv, char **azColName)
     return 0;
 }
 
-int main(int argc, char **argv)
+void assignPriorityValues(map<string, int> &stats, map<string, int> priorities)
+{
+    map<int, int> priorityValues = {{1, 16}, {2, 13}, {3, 11}, {4, 9}, {5, 7}, {6, 5}};
+
+    for (auto &stat : stats)
+    {
+        stat.second += priorityValues[priorities[stat.first]];
+    }
+}
+
+int main()
 {
     sqlite3 *DB;
     char *messageError;
@@ -32,22 +42,41 @@ int main(int argc, char **argv)
     sqlite3_exec(DB, query.c_str(), callback, NULL, NULL);
 
     // Ввод данных нового персонажа
-    string name = "Aratorn";
+    string name = "Helm";
     string race = "Human";
     string classType = "Ranger";
     int age = 87;
     string alignment = "Lawful Good";
 
-    int strength = 18;
-    int dexterity = 14;
-    int constitution = 16;
-    int intelligence = 12;
-    int wisdom = 15;
-    int charisma = 17;
+    map<string, int> stats = {{"strength", 0}, {"dexterity", 0}, {"constitution", 0}, {"intelligence", 0}, {"wisdom", 0}, {"charisma", 0}};
+
+
+    map<string, int> priorities;
+
+    priorities["strength"] = 1;
+    priorities["dexterity"] = 2;
+    priorities["constitution"] = 3;
+    priorities["intelligence"] = 4;
+    priorities["wisdom"] = 5;
+    priorities["charisma"] = 6;
+
+    if (race == "Human")
+    {
+        for (auto &stat : stats)
+        {
+            stat.second++;
+        }
+    }
+    else if (race == "Elf")
+    {
+        stats["dexterity"]++;
+    }
+
+    assignPriorityValues(stats, priorities);
 
     string insertCharacter = "INSERT INTO CHARACTER (NAME, RACE, CLASS, AGE, ALIGNMENT) VALUES('" + name + "', '" + race + "', '" + classType + "', " + to_string(age) + ", '" + alignment + "');";
 
-    string insertStats = "INSERT INTO STATS (NAME, STRENGTH, DEXTERITY, CONSTITUTION, INTELLIGENCE, WISDOM, CHARISMA) VALUES('" + name + "', " + to_string(strength) + ", " + to_string(dexterity) + ", " + to_string(constitution) + ", " + to_string(intelligence) + ", " + to_string(wisdom) + ", " + to_string(charisma) + ");";
+    string insertStats = "INSERT INTO STATS (NAME, STRENGTH, DEXTERITY, CONSTITUTION, INTELLIGENCE, WISDOM, CHARISMA) VALUES('" + name + "', " + to_string(stats["strength"]) + ", " + to_string(stats["dexterity"]) + ", " + to_string(stats["constitution"]) + ", " + to_string(stats["intelligence"]) + ", " + to_string(stats["wisdom"]) + ", " + to_string(stats["charisma"]) + ");";
 
     exit = sqlite3_exec(DB, insertCharacter.c_str(), NULL, 0, &messageError);
     if (exit != SQLITE_OK)
@@ -74,7 +103,7 @@ int main(int argc, char **argv)
     // Вывод содержимого таблиц
     string queryCharacter = "SELECT c.NAME, c.RACE, c.CLASS, c.AGE, c.ALIGNMENT, s.STRENGTH, s.DEXTERITY, s.CONSTITUTION, s.INTELLIGENCE, s.WISDOM, s.CHARISMA FROM CHARACTER c JOIN STATS s ON c.NAME = s.NAME;";
 
-    cout<< "CHARACTER TABLE:" << endl;
+    cout << "CHARACTER TABLE:" << endl;
     sqlite3_exec(DB, queryCharacter.c_str(), callback, NULL, NULL);
 
     // cout << "STATS TABLE:" << endl;
